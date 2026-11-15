@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>羽球社分帳</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --bg: #f3f6f4;
+    --card: #ffffff;
+    --text: #16211c;
+    --muted: #6c7d74;
+    --line: #e2e9e4;
+    --brand: #0d9b74;
+    --brand-600: #0a805f;
+    --brand-soft: #e4f6ef;
+    --brand-ink: #065f46;
+    --danger: #cf4b4b;
+    --danger-soft: #fdecec;
+    --warn: #9a6200;
+    --warn-soft: #fbf1dd;
+    --shadow: 0 1px 2px rgba(16, 40, 30, .04), 0 10px 30px -14px rgba(16, 40, 30, .18);
+    --radius: 16px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1311;
+      --card: #141d19;
+      --text: #e9f1ec;
+      --muted: #94a89d;
+      --line: #22322b;
+      --brand: #37c79a;
+      --brand-600: #2bb388;
+      --brand-soft: #123a2e;
+      --brand-ink: #a7f3d6;
+      --danger: #f08080;
+      --danger-soft: #3a2020;
+      --warn: #e0b060;
+      --warn-soft: #332a17;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 30px -14px rgba(0, 0, 0, .6);
+    }
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .app {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 22px 18px 56px;
+  }
+
+  /* ---------- header ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .logo {
+    width: 48px; height: 48px; flex: none;
+    display: grid; place-items: center;
+    font-size: 25px; border-radius: 14px;
+    background: var(--brand-soft);
+    border: 1px solid var(--line);
+  }
+
+  .topbar h1 { margin: 0; font-size: 20px; letter-spacing: .01em; }
+  .topbar p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+
+  /* ---------- layout ---------- */
+  .layout {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "entry result"
+        "members history";
+      align-items: start;
+    }
+  }
+
+  .area-entry    { grid-area: entry; }
+  .area-result   { grid-area: result; }
+  .area-members  { grid-area: members; }
+  .area-history  { grid-area: history; }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 14px;
+  }
+  .card-head h2 { margin: 0; font-size: 15px; letter-spacing: .02em; }
+
+  .badge-soft {
+    font-size: 11px; font-weight: 700; padding: 3px 9px;
+    border-radius: 999px; color: var(--brand-ink);
+    background: var(--brand-soft); border: 1px solid var(--line);
+    white-space: nowrap;
+  }
+
+  /* ---------- form ---------- */
+  .field { display: block; margin-bottom: 13px; }
+  .label {
+    display: block; margin-bottom: 6px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: .02em; color: var(--muted);
+  }
+  .label .muted { font-weight: 400; opacity: .8; }
+
+  input[type="text"], input[type="date"] {
+    width: 100%; padding: 11px 13px;
+    border: 1px solid var(--line); border-radius: 11px;
+    background: var(--bg); color: var(--text);
+    font: inherit; font-size: 15px; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(45, 190, 145, .22);
+  }
+  input::placeholder { color: var(--muted); opacity: .65; }
+
+  .money { position: relative; }
+  .money .prefix {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 13px; font-weight: 700; color: var(--muted); pointer-events: none;
+  }
+  .money input { padding-left: 52px; font-size: 23px; font-weight: 700;
+    letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+
+  .hint { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+  .hint.center { text-align: center; }
+
+  /* ---------- attendance ---------- */
+  .attendance { margin-top: 4px; }
+  .attendance-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .attendance-head .label { margin-bottom: 0; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px; border: 1px solid var(--line);
+    border-radius: 999px; background: var(--bg);
+    color: var(--text); font: inherit; font-size: 14px; line-height: 1.2;
+    cursor: pointer; user-select: none;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .chip:hover { border-color: var(--brand); }
+
+  .chip .dot {
+    width: 8px; height: 8px; flex: none;
+    border-radius: 50%; background: var(--muted); opacity: .35;
+  }
+  .chip.on {
+    background: var(--brand-soft); border-color: var(--brand);
+    color: var(--brand-ink); font-weight: 600;
+  }
+  .chip.on .dot { background: var(--brand); opacity: 1; }
+
+  .tag, .tag-free {
+    font-size: 10.5px; font-weight: 700; padding: 1px 6px;
+    border-radius: 999px; background: var(--warn-soft); color: var(--warn);
+    white-space: nowrap;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 10px 16px; border: 1px solid var(--line);
+    border-radius: 11px; background: var(--card); color: var(--text);
+    font: inherit; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s, opacity .15s;
+  }
+  .btn:hover { border-color: var(--brand); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .btn.primary:hover { background: var(--brand-600); border-color: var(--brand-600); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.block { width: 100%; padding: 13px 16px; margin-top: 14px; font-size: 15px; }
+
+  .link-btn {
+    padding: 3px 6px; border: 0; border-radius: 8px; background: none;
+    color: var(--brand); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .link-btn:hover { background: var(--brand-soft); }
+  .link-btn.danger { color: var(--danger); }
+  .link-btn.danger:hover { background: var(--danger-soft); }
+
+  .mini {
+    padding: 2px 7px; border: 1px solid var(--line);
+    border-radius: 999px; background: transparent; color: var(--muted);
+    font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .mini:hover { color: var(--brand); border-color: var(--brand); }
+  .mini.warn {
+    color: var(--warn); background: var(--warn-soft);
+    border-color: rgba(154, 98, 0, .28);
+  }
+
+  .checkline {
+    display: flex; align-items: center; gap: 7px;
+    margin: -4px 0 12px; font-size: 12.5px; color: var(--muted);
+    cursor: pointer; user-select: none;
+  }
+  .checkline input { width: 15px; height: 15px; margin: 0; accent-color: var(--brand); cursor: pointer; }
+
+  /* ---------- result ---------- */
+  .hero {
+    padding: 16px 10px 18px; text-align: center;
+    border: 1px solid var(--line); border-radius: 14px;
+    background: linear-gradient(180deg, var(--brand-soft), transparent 85%);
+  }
+  .hero-label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+  .hero-value {
+    margin-top: 4px; font-size: clamp(34px, 8vw, 44px);
+    font-weight: 800; line-height: 1.15; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-value .cur { margin-right: 2px; font-size: .5em; font-weight: 700; vertical-align: .28em; color: var(--muted); }
+  .hero-sub { min-height: 19px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin: 14px 0 0; padding: 0;
+  }
+  .stats > div {
+    padding: 8px 5px; text-align: center;
+    border: 1px solid var(--line); border-radius: 11px; background: var(--bg);
+  }
+  .stats dt { margin: 0; font-size: 11px; color: var(--muted); }
+  .stats dd { margin: 2px 0 0; font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .share-list { list-style: none; margin: 14px 0 0; padding: 0; max-height: 290px; overflow-y: auto; }
+  .share-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 9px 2px; border-bottom: 1px dashed var(--line); font-size: 14px;
+  }
+  .share-list li:last-child { border-bottom: 0; }
+  .share-list .name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .share-list .name > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .share-list .right { display: flex; align-items: center; gap: 7px; flex: none; }
+
+  .amount { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .amount.free { font-weight: 600; color: var(--muted); }
+
+  .note {
+    margin-top: 12px; padding: 9px 12px; border-radius: 10px;
+    font-size: 12.5px; line-height: 1.5;
+  }
+  .note.warn { color: var(--warn); background: var(--warn-soft); border: 1px solid rgba(154, 98, 0, .22); }
+
+  /* ---------- members ---------- */
+  .add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .add-row input { flex: 1; min-width: 0; }
+
+  .member-list { list-style: none; margin: 0; padding: 0; }
+  .member-list li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 2px; border-bottom: 1px solid var(--line);
+  }
+  .member-list li:last-child { border-bottom: 0; }
+  .member-list .mname {
+    flex: 1; min-width: 0; overflow: hidden;
+    white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600;
+  }
+  .member-list .meta { flex: none; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+  .icon-btn {
+    flex: none; width: 30px; height: 30px; display: grid; place-items: center;
+    border: 1px solid transparent; border-radius: 9px; background: none;
+    color: var(--muted); font-size: 17px; line-height: 1; cursor: pointer;
+  }
+  .icon-btn:hover { color: var(--danger); background: var(--danger-soft); border-color: var(--line); }
+
+  /* ---------- history ---------- */
+  .hitem { margin-bottom: 9px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); overflow: hidden; }
+  .hitem:last-child { margin-bottom: 0; }
+  .hitem summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 11px 13px; cursor: pointer; list-style: none;
+  }
+  .hitem summary::-webkit-details-marker { display: none; }
+  .hitem summary:hover { background: var(--brand-soft); }
+  .hitem[open] { border-color: var(--brand); }
+
+  .hleft { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .hdate { font-size: 13.5px; font-weight: 700; }
+  .hmemo { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11.5px; color: var(--muted); }
+  .hright { flex: none; text-align: right; white-space: nowrap; }
+  .hamt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .hper { display: block; font-size: 11.5px; color: var(--muted); }
+
+  .hbody { padding: 4px 13px 10px; border-top: 1px solid var(--line); }
+  .hbody .share-list { max-height: none; margin-top: 4px; }
+  .hfoot {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-top: 8px; font-size: 11.5px; color: var(--muted);
+  }
+
+  .empty { padding: 16px 6px; text-align: center; font-size: 13px; line-height: 1.7; color: var(--muted); }
+
+  /* ---------- footer / toast ---------- */
+  .foot {
+    margin-top: 24px; text-align: center; font-size: 11.5px; line-height: 1.9; color: var(--muted);
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; z-index: 50;
+    padding: 10px 18px; border-radius: 999px;
+    background: var(--text); color: var(--bg);
+    font-size: 13.5px; font-weight: 600;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .22);
+    opacity: 0; transform: translate(-50%, 16px); pointer-events: none;
+    transition: opacity .25s, transform .25s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- loading / error ---------- */
+  .loading-overlay {
+    position: fixed; inset: 0; display: grid; place-items: center;
+    background: var(--bg); z-index: 100; font-size: 16px; color: var(--muted);
+  }
+  .error-banner {
+    padding: 12px 16px; border-radius: 12px; background: var(--danger-soft);
+    color: var(--danger); margin-bottom: 16px; font-size: 13px; display: none;
+  }
+  .error-banner.show { display: block; }
+
+  @media (max-width: 500px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div>正在載入羽球社分帳…</div>
+</div>
+
+<div class="error-banner" id="errorBanner"></div>
+
+<div class="app">
+  <header class="topbar">
+    <span class="logo" aria-hidden="true">&#x1F3F9;</span>
+    <div>
+      <h1>羽球社分帳</h1>
+      <p>填這週總支出，自動算出每人該付多少（雲端同步）</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- 本週記帳 -->
+    <section class="card area-entry">
+      <div class="card-head">
+        <h2>本週記帳</h2>
+        <span class="badge-soft">只要填總數</span>
+      </div>
+
+      <label class="field">
+        <span class="label">日期</span>
+        <input type="date" id="dateInput" />
+      </label>
+
+      <label class="field">
+        <span class="label">本週總支出</span>
+        <span class="money">
+          <span class="prefix">NT$</span>
+          <input type="text" id="totalInput" inputmode="numeric" autocomplete="off" placeholder="0" />
+        </span>
+        <span class="hint">場地費＋球費＋其他雜支，加起來一個數字就好</span>
+      </label>
+
+      <label class="field">
+        <span class="label">備註 <span class="muted">（選填）</span></span>
+        <input type="text" id="memoInput" maxlength="60" autocomplete="off" placeholder="例：2 面場地 2 小時、新球 1 筒" />
+      </label>
+
+      <div class="attendance">
+        <div class="attendance-head">
+          <span class="label">本週出席人員</span>
+          <button type="button" class="link-btn" id="selectAllBtn">全選</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <p class="hint" id="attendanceHint"></p>
+      </div>
+    </section>
+
+    <!-- 分帳結果 -->
+    <section class="card area-result">
+      <div class="card-head">
+        <h2>分帳結果</h2>
+        <button type="button" class="link-btn" id="copyBtn">複製結果</button>
+      </div>
+
+      <div class="hero">
+        <div class="hero-label">每人分攤</div>
+        <div class="hero-value"><span class="cur">NT$</span><span id="perPerson">0</span></div>
+        <div class="hero-sub" id="heroSub">先輸入本週總支出</div>
+      </div>
+
+      <dl class="stats">
+        <div><dt>總支出</dt><dd id="statTotal">NT$0</dd></div>
+        <div><dt>出席</dt><dd id="statAttend">0 人</dd></div>
+        <div><dt>需收費</dt><dd id="statPayers">0 人</dd></div>
+        <div><dt>首次免費</dt><dd id="statFree">0 人</dd></div>
+      </dl>
+
+      <ul class="share-list" id="shareList"></ul>
+      <div class="note warn" id="resultWarn" hidden></div>
+
+      <button type="button" class="btn primary block" id="saveBtn" disabled>儲存本週紀錄</button>
+      <p class="hint center" id="saveHint">輸入本週總支出後即可儲存</p>
+    </section>
+
+    <!-- 社員名單 -->
+    <section class="card area-members">
+      <div class="card-head">
+        <h2>社員名單</h2>
+        <span class="hint" id="memberCount" style="margin:0"></span>
+      </div>
+
+      <form class="add-row" id="addMemberForm">
+        <input type="text" id="memberInput" maxlength="20" autocomplete="off" placeholder="輸入名字，按 Enter 新增" />
+        <button type="submit" class="btn">新增</button>
+      </form>
+
+      <label class="checkline" for="newbieInput">
+        <input type="checkbox" id="newbieInput" />
+        <span>這位是第一次來，首訪免費</span>
+      </label>
+
+      <ul class="member-list" id="memberList"></ul>
+      <p class="hint">標記「首訪免費」的新人，第一次出席不用付錢，第二次起恢復全額；其他人一律平分。</p>
+    </section>
+
+    <!-- 歷史紀錄 -->
+    <section class="card area-history">
+      <div class="card-head">
+        <h2>歷史紀錄</h2>
+        <button type="button" class="link-btn danger" id="clearAllBtn" hidden>清除全部</button>
+      </div>
+      <div id="historyList"></div>
+    </section>
+  </main>
+
+  <p class="foot">
+    規則：出席者平均分攤本週總支出；新人第一次出席免費，差額由當週其他出席者平均吸收。<br />
+    資料同步在 Supabase 雲端，任何裝置都能查看。
+  </p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Import map for Supabase SDK -->
+<script type="importmap">
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.78.0"
+  }
+}
+</script>
+
+<script type="module">
+import { createClient } from '@supabase/supabase-js';
+
+// ============================================================
+//  Supabase 連線設定
+// ============================================================
+const SUPABASE_URL   = 'https://tpguhmiyrofqjuqzvgwb.supabase.co';
+const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZ3VobWl5cm9mcWp1cXp2Z3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3MTkzNDAsImV4cCI6MjExMDI5NTM0MH0.oxypBO5TSWRuEVanHnEzSDnaYTM8iSi0AYB5_lCQI-w';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+//  State & DOM
+// ============================================================
+const els = {
+  dateInput: document.getElementById('dateInput'),
+  totalInput: document.getElementById('totalInput'),
+  memoInput: document.getElementById('memoInput'),
+  chips: document.getElementById('chips'),
+  attendanceHint: document.getElementById('attendanceHint'),
+  selectAllBtn: document.getElementById('selectAllBtn'),
+  perPerson: document.getElementById('perPerson'),
+  heroSub: document.getElementById('heroSub'),
+  statTotal: document.getElementById('statTotal'),
+  statAttend: document.getElementById('statAttend'),
+  statPayers: document.getElementById('statPayers'),
+  statFree: document.getElementById('statFree'),
+  shareList: document.getElementById('shareList'),
+  resultWarn: document.getElementById('resultWarn'),
+  saveBtn: document.getElementById('saveBtn'),
+  saveHint: document.getElementById('saveHint'),
+  copyBtn: document.getElementById('copyBtn'),
+  memberForm: document.getElementById('addMemberForm'),
+  memberInput: document.getElementById('memberInput'),
+  newbieInput: document.getElementById('newbieInput'),
+  memberList: document.getElementById('memberList'),
+  memberCount: document.getElementById('memberCount'),
+  historyList: document.getElementById('historyList'),
+  clearAllBtn: document.getElementById('clearAllBtn'),
+  toast: document.getElementById('toast'),
+  loadingOverlay: document.getElementById('loadingOverlay'),
+  errorBanner: document.getElementById('errorBanner'),
+};
+
+let members = [];
+let records = [];
+const selected = new Set();
+const forceCharge = new Set();
+let toastTimer = null;
+
+// ============================================================
+//  Helpers
+// ============================================================
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function money(n) {
+  return 'NT$' + Math.round(Number(n)||0).toLocaleString('en-US');
+}
+
+function todayISO() {
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
+function prettyDate(iso) {
+  if (!iso) return '';
+  const [y,m,d] = String(iso).split('-').map(Number);
+  const wd = '日一二三四五六'[new Date(y,m-1,d).getDay()];
+  return `${m}/${d}（${wd}）`;
+}
+
+function visitCount(memberId) {
+  return records.filter(r => r.attendees?.some(a => a.member_id === memberId)).length;
+}
+
+function isFirstEligible(member) {
+  return member.first_free && visitCount(member.id) === 0;
+}
+
+function getTotal() {
+  const digits = els.totalInput.value.replace(/\D/g,'');
+  return digits ? Number(digits) : 0;
+}
+
+function toast(msg) {
+  els.toast.textContent = msg;
+  els.toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => els.toast.classList.remove('show'), 2200);
+}
+
+function showError(msg) {
+  els.errorBanner.textContent = msg;
+  els.errorBanner.classList.add('show');
+}
+
+// ============================================================
+//  Calculation
+// ============================================================
+function calc(total) {
+  const attendees = members.filter(m => selected.has(m.id));
+  const free = [], payers = [];
+  const freeSet = new Set();
+
+  attendees.forEach(m => {
+    if (isFirstEligible(m) && !forceCharge.has(m.id)) {
+      free.push(m); freeSet.add(m.id);
+    } else { payers.push(m); }
+  });
+
+  const shares = new Map();
+  let remainder = 0;
+  if (payers.length && total > 0) {
+    const base = Math.floor(total / payers.length);
+    remainder = total - base * payers.length;
+    payers.forEach((m, i) => shares.set(m.id, base + (i < remainder ? 1 : 0)));
+  } else {
+    payers.forEach(m => shares.set(m.id, 0));
+  }
+  free.forEach(m => shares.set(m.id, 0));
+
+  return { total, attendees, free, payers, freeSet, shares, remainder };
+}
+
+// ============================================================
+//  Rendering
+// ============================================================
+function renderChips() {
+  if (!members.length) {
+    els.chips.innerHTML = '<div class="empty">還沒有社員，先在下面的「社員名單」新增名字</div>';
+  } else {
+    els.chips.innerHTML = members.map(m => {
+      const on = selected.has(m.id);
+      const first = isFirstEligible(m);
+      return `<button type="button" class="chip${on ? ' on' : ''}" data-id="${esc(m.id)}" aria-pressed="${on}">` +
+        `<span class="dot"></span><span>${esc(m.name)}</span>` +
+        (first ? '<span class="tag">首次</span>' : '') + '</button>';
+    }).join('');
+  }
+  syncAttendanceUI();
+}
+
+function syncAttendanceUI() {
+  const all = members.length > 0 && members.every(m => selected.has(m.id));
+  els.selectAllBtn.textContent = all ? '取消全選' : '全選';
+  els.selectAllBtn.hidden = !members.length;
+  els.attendanceHint.textContent = members.length ? `已選 ${selected.size} / ${members.length} 人` : '';
+}
+
+function renderMembers() {
+  if (!members.length) {
+    els.memberList.innerHTML = '<li><div class="empty" style="padding:10px 0">名單是空的，新增社員就能開始記帳</div></li>';
+    els.memberCount.textContent = '';
+    return;
+  }
+  els.memberCount.textContent = `${members.length} 人`;
+  els.memberList.innerHTML = members.map(m => {
+    const visits = visitCount(m.id);
+    let meta;
+    if (visits > 0) {
+      meta = `<span class="meta">出席 ${visits} 次</span>`;
+    } else if (isFirstEligible(m)) {
+      meta = `<button type="button" class="mini warn" data-free="${esc(m.id)}" title="點一下改成一般社員">首訪免費</button>`;
+    } else {
+      meta = `<button type="button" class="mini" data-free="${esc(m.id)}" title="點一下改成首訪免費">一般社員</button>`;
+    }
+    return `<li><span class="mname">${esc(m.name)}</span>${meta}` +
+      `<button type="button" class="icon-btn" data-remove="${esc(m.id)}" aria-label="移除 ${esc(m.name)}">&times;</button></li>`;
+  }).join('');
+}
+
+function renderResult() {
+  const total = getTotal();
+  const c = calc(total);
+
+  els.statTotal.textContent = money(total);
+  els.statAttend.textContent = `${c.attendees.length} 人`;
+  els.statPayers.textContent = `${c.payers.length} 人`;
+  els.statFree.textContent = `${c.free.length} 人`;
+
+  const base = c.payers.length ? Math.floor(total / c.payers.length) : 0;
+  els.perPerson.textContent = base.toLocaleString('en-US');
+
+  if (total === 0) els.heroSub.textContent = '先輸入本週總支出';
+  else if (!c.attendees.length) els.heroSub.textContent = '選好出席人員就會自動算';
+  else if (!c.payers.length) els.heroSub.textContent = '全數首次免費，本週沒有分攤者';
+  else if (c.remainder > 0) els.heroSub.textContent = `${c.payers.length} 人分攤，尾差 ${c.remainder} 元分配給前 ${c.remainder} 位（多付 1 元）`;
+  else els.heroSub.textContent = `${c.payers.length} 人分攤 ${money(total)}`;
+
+  let rows = '';
+  c.attendees.forEach(m => {
+    const isFree = c.freeSet.has(m.id);
+    const amount = c.shares.get(m.id) || 0;
+    let right = '';
+    if (isFree) {
+      right = `<span class="amount free">NT$0</span>` +
+        `<button type="button" class="mini" data-charge="${esc(m.id)}">照收全額</button>`;
+    } else if (isFirstEligible(m)) {
+      right = `<span class="amount">${money(amount)}</span>` +
+        `<button type="button" class="mini" data-charge="${esc(m.id)}">改回免費</button>`;
+    } else {
+      right = `<span class="amount">${money(amount)}</span>`;
+    }
+    rows += `<li><span class="name">${isFree ? '<span class="tag-free">首次免費</span>' : ''}<span>${esc(m.name)}</span></span><span class="right">${right}</span></li>`;
+  });
+  els.shareList.innerHTML = rows;
+
+  let warn = '';
+  if (total > 0 && c.attendees.length > 0 && c.payers.length === 0) {
+    warn = '每個人都是首次免費，等於沒人分攤這筆錢。可以把某位新人改成「照收全額」，或這週先不收。';
+  }
+  els.resultWarn.hidden = !warn;
+  els.resultWarn.textContent = warn;
+
+  const canSave = total > 0 && c.attendees.length > 0 && c.payers.length > 0;
+  els.saveBtn.disabled = !canSave;
+
+  if (total === 0) els.saveHint.textContent = '輸入本週總支出後即可儲存';
+  else if (!c.attendees.length) els.saveHint.textContent = '請勾選本週出席的人';
+  else if (!c.payers.length) els.saveHint.textContent = '沒有可分攤的人，先調整新人免費';
+  else els.saveHint.textContent = '儲存後會自動記錄到雲端';
+}
+
+function renderHistory() {
+  if (!records.length) {
+    els.clearAllBtn.hidden = true;
+    els.historyList.innerHTML = '<div class="empty">還沒有紀錄<br />填好上面資料、按下「儲存本週紀錄」就會出現在這裡</div>';
+    return;
+  }
+  els.clearAllBtn.hidden = false;
+
+  const sorted = [...records].sort((a,b) => {
+    const byDate = String(b.date||'').localeCompare(String(a.date||''));
+    return byDate !== 0 ? byDate : (Number(b.created_at)||0) - (Number(a.created_at)||0);
+  });
+
+  els.historyList.innerHTML = sorted.map(r => {
+    const attendees = r.attendees || [];
+    const payers = attendees.filter(a => !a.free);
+    const freeCount = attendees.length - payers.length;
+
+    let per = '全數免費';
+    if (payers.length) {
+      const amounts = payers.map(a => Math.round(Number(a.amount)||0));
+      const min = Math.min(...amounts), max = Math.max(...amounts);
+      per = `每人 ${min.toLocaleString('en-US')}${max > min ? '\u2013'+max.toLocaleString('en-US') : ''}`;
+    }
+
+    const rows = attendees.map(a =>
+      `<li><span class="name">${a.free?'<span class="tag-free">首次</span>':''}<span>${esc(a.name)}</span></span>` +
+      `<span class="right">${a.free?'<span class="amount free">免費</span>':'<span class="amount">'+money(a.amount)+'</span>'}</span></li>`
+    ).join('');
+
+    return `<details class="hitem"><summary><span class="hleft">` +
+      `<span class="hdate">${esc(prettyDate(r.date))}</span>` +
+      (r.memo ? `<span class="hmemo">${esc(r.memo)}</span>` : '') +
+      `</span><span class="hright"><span class="hamt">${money(r.total)}</span><span class="hper">${per}</span></span></summary>` +
+      `<div class="hbody"><ul class="share-list">${rows}</ul>` +
+      `<div class="hfoot"><span>出席 ${attendees.length} 人${freeCount ? '&#xB7;首次免費 '+freeCount+' 人' : ''}</span>` +
+      `<button type="button" class="link-btn danger" data-del="${esc(r.id)}">刪除這筆</button></div></div></details>`;
+  }).join('');
+}
+
+function renderAll() {
+  renderChips();
+  renderMembers();
+  renderResult();
+  renderHistory();
+}
+
+// ============================================================
+//  Supabase CRUD
+// ============================================================
+async function loadMembers() {
+  const { data, error } = await supabase.from('members').select('*').order('created_at');
+  if (error) throw error;
+  members = data || [];
+}
+
+async function loadRecords() {
+  // attendees table doesn't have name — join through members
+  const { data, error } = await supabase.from('records').select(`
+    *,
+    attendees!inner(
+      member_id, amount, free,
+      members(name)
+    )
+  `).order('date', {ascending:false});
+  if (error) throw error;
+  records = data || [];
+}
+
+async function saveRecord() {
+  const total = getTotal();
+  const c = calc(total);
+  if (!(total > 0 && c.attendees.length > 0 && c.payers.length > 0)) return;
+
+  const date = els.dateInput.value || todayISO();
+  const memo = els.memoInput.value.trim();
+
+  const { data: rec, error: recErr } = await supabase.from('records')
+    .insert({ date, total, memo }).select().single();
+  if (recErr) throw recErr;
+
+  const atts = c.attendees.map(m => ({
+    record_id: rec.id,
+    member_id: m.id,
+    amount: c.shares.get(m.id) || 0,
+    free: c.freeSet.has(m.id),
+  }));
+
+  const { error: attErr } = await supabase.from('attendees').insert(atts);
+  if (attErr) throw attErr;
+
+  els.totalInput.value = '';
+  els.memoInput.value = '';
+  selected.clear();
+  forceCharge.clear();
+  await loadMembers();
+  await loadRecords();
+  renderAll();
+  toast(`已儲存 ${prettyDate(rec.date)}：${money(rec.total)}`);
+}
+
+async function deleteRecord(id) {
+  const { error } = await supabase.from('records').delete().eq('id', id);
+  if (error) throw error;
+  await loadRecords();
+  renderAll();
+  toast('已刪除紀錄');
+}
+
+async function addMember(name, firstFree) {
+  const { data, error } = await supabase.from('members')
+    .insert({ name, first_free: firstFree }).select().single();
+  if (error) throw error;
+  members.push(data);
+  renderAll();
+  toast(`已新增 ${name}${firstFree ? '（首訪免費）' : ''}`);
+}
+
+async function removeMember(id) {
+  const { error } = await supabase.from('members').delete().eq('id', id);
+  if (error) throw error;
+  members = members.filter(m => m.id !== id);
+  selected.delete(id);
+  forceCharge.delete(id);
+  renderAll();
+  toast('已從名單移除');
+}
+
+async function toggleFreeStatus(id) {
+  const member = members.find(m => m.id === id);
+  if (!member) return;
+  const newStatus = !isFirstEligible(member);
+  const { error } = await supabase.from('members').update({ first_free: newStatus }).eq('id', id);
+  if (error) throw error;
+  member.first_free = newStatus;
+  renderAll();
+  toast(`${member.name}${newStatus ? '：首訪免費' : '：一般社員'}`);
+}
+
+// ============================================================
+//  Copy summary
+// ============================================================
+function buildSummary() {
+  const total = getTotal();
+  const c = calc(total);
+  const lines = [];
+  lines.push('\uD83C\uDFF9 \u7FBD\u7403\u793E\u5206\u5E1D');
+  lines.push('\u65E5\u671F\uFF1A' + prettyDate(els.dateInput.value || todayISO()));
+  if (els.memoInput.value.trim()) lines.push('\u5099\u8A3B\uFF1A' + els.memoInput.value.trim());
+  lines.push('\u672C\u9031\u7E3D\u652F\u51FA\uFF1A' + money(total));
+  lines.push('\u51FA\u5EAB\uFF1A' + c.attendees.length + ' \u4EBA' +
+    (c.free.length ? '\uFF08\u9996\u6B21\u514D\u8CBB ' + c.free.length + ' \u4EBA\uFF09' : ''));
+  if (c.payers.length) {
+    lines.push('\u6BCF\u4EBA\u5206\u64D4\uFF1A' + money(Math.floor(total / c.payers.length)) +
+      (c.remainder ? '\uFF08\u5C3E\u5DEE ' + c.remainder + ' \u5143\u5DF2\u5206\u64D4\uFF09' : ''));
+  }
+  lines.push('\u2014\u2014\u2014\u2014\u2014');
+  c.attendees.forEach(m => {
+    if (c.freeSet.has(m.id)) lines.push('\uD83C\uDF81 ' + m.name + '\uFF1A\u9996\u6B21\u514D\u8CBB');
+    else lines.push('\u30FB' + m.name + '\uFF1A' + money(c.shares.get(m.id) || 0));
+  });
+  return lines.join('\n');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('\u5DF2\u8906\u8F38\uFF0C\u53EF\u4EE5\u8CB4\u5230\u7FA4\u7D44\u4E86'), () => fallbackCopy(text));
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.style.top = '-1000px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('\u5DF2\u8906\u8F38\uFF0C\u53EF\u4EE5\u8CB4\u5230\u7FA4\u7D44\u4E86'); } catch(e) { toast('\u8906\u8F38\u5931\u6557\uFF0C\u8ACB\u624B\u52D5\u9078\u53D6\u6587\u5B57'); }
+  document.body.removeChild(ta);
+}
+
+// ============================================================
+//  Event listeners
+// ============================================================
+els.totalInput.addEventListener('input', () => {
+  const digits = els.totalInput.value.replace(/\D/g,'').slice(0,9);
+  els.totalInput.value = digits ? Number(digits).toLocaleString('en-US') : '';
+  renderResult();
+});
+
+els.dateInput.addEventListener('change', renderResult);
+
+els.chips.addEventListener('click', e => {
+  const btn = e.target.closest('.chip');
+  if (!btn || !btn.dataset.id) return;
+  const id = btn.dataset.id;
+  if (selected.has(id)) { selected.delete(id); forceCharge.delete(id); }
+  else selected.add(id);
+  btn.classList.toggle('on', selected.has(id));
+  btn.setAttribute('aria-pressed', selected.has(id) ? 'true' : 'false');
+  syncAttendanceUI(); renderResult();
+});
+
+els.selectAllBtn.addEventListener('click', () => {
+  const all = members.length > 0 && members.every(m => selected.has(m.id));
+  if (all) { selected.clear(); forceCharge.clear(); }
+  else members.forEach(m => selected.add(m.id));
+  renderChips(); renderResult();
+});
+
+els.shareList.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-charge]');
+  if (!btn) return;
+  const id = btn.dataset.charge;
+  forceCharge.has(id) ? forceCharge.delete(id) : forceCharge.add(id);
+  renderResult();
+});
+
+els.memberForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const name = els.memberInput.value.trim().replace(/\s+/g,' ');
+  if (!name) return;
+  const dup = members.some(m => m.name.toLowerCase() === name.toLowerCase());
+  if (dup) { toast('\u540D\u55AE\u88E1\u5DF2\u7D93\u6709\u300C'+name+'\u300D\u4E86'); return; }
+  addMember(name, els.newbieInput.checked);
+  els.memberInput.value = '';
+  els.newbieInput.checked = false;
+});
+
+els.memberList.addEventListener('click', e => {
+  const freeBtn = e.target.closest('button[data-free]');
+  if (freeBtn) { toggleFreeStatus(freeBtn.dataset.free); return; }
+  const btn = e.target.closest('button[data-remove]');
+  if (!btn) return;
+  removeMember(btn.dataset.remove);
+});
+
+els.historyList.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-del]');
+  if (!btn) return;
+  e.preventDefault();
+  deleteRecord(btn.dataset.del);
+});
+
+els.clearAllBtn.addEventListener('click', async () => {
+  if (!members.length && !records.length) return;
+  if (!confirm('\u78BA\u5B9A\u6E05\u9664\u6240\u6709\u793E\u54E1\u8207\u7D00\u9304\uFF1F\u6B64\u52D5\u4F5C\u7121\u6CD5\u5FA9\u539F\u3002')) return;
+  await supabase.from('attendees').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  await supabase.from('records').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  await supabase.from('members').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  members = []; records = []; selected.clear(); forceCharge.clear();
+  renderAll(); toast('\u5DF2\u6E05\u9664\u6240\u6709\u8CC7\u6599');
+});
+
+els.saveBtn.addEventListener('click', saveRecord);
+els.copyBtn.addEventListener('click', () => {
+  const c = calc(getTotal());
+  if (!c.attendees.length) { toast('\u5148\u52D5\u9078\u672C\u9031\u51FA\u5EAB\u7684\u4EBA'); return; }
+  copyText(buildSummary());
+});
+
+// ============================================================
+//  Init
+// ============================================================
+(async function init() {
+  try {
+    await Promise.all([loadMembers(), loadRecords()]);
+    els.dateInput.value = todayISO();
+    renderAll();
+    els.loadingOverlay.style.display = 'none';
+  } catch (err) {
+    console.error('Init error:', err);
+    showError('\u8F09\u5165\u5931\u6557\uFF1A' + err.message);
+    els.loadingOverlay.style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>
